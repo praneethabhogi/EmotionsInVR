@@ -4,42 +4,51 @@ using System.Collections;
 using UnityEngine.InputSystem;
 public class ColorChange : MonoBehaviour
 {
-    public Gradient marbleColorGr;
-    public bool changeColor;
-    private Coroutine setMatColor;
-    private float eval;
-    public Material potsMarbleMat;
-    private Color originalColor;
 
     public InputActionReference action;
-
+    private Coroutine setMatColor;
+    public Material material;
+    public float transitionTime = 1f;
+    public Color newColor;
+    public Color startColor;
+    private bool colorChanged = false;
     private void Start()
     {
         action.action.Enable();
-        action.action.performed += (ctx) => ToggleColorChange();
-        originalColor = potsMarbleMat.color;
+        action.action.performed += (ctx) => changeColor();
     }
-    private void ToggleColorChange()
+    
+
+    private void Awake()
     {
-        changeColor = !changeColor;
-        if (changeColor)
+        material.color = startColor;
+    }
+    public void changeColor()
+    {
+        Debug.Log("color changed");
+        if (colorChanged)
         {
-            setMatColor = StartCoroutine(SetMatColor());
+            setMatColor = StartCoroutine(SetMatColor(newColor, startColor));
+            colorChanged = false;
         }
         else
         {
-            StopCoroutine(setMatColor);
-            potsMarbleMat.color = originalColor;
+            setMatColor = StartCoroutine(SetMatColor(startColor, newColor));
+            colorChanged = true;
         }
     }
-
-    private IEnumerator SetMatColor()
+    private IEnumerator SetMatColor(Color firstColor, Color secondColor)
     {
-        while (true)
+        float timer = 0f;
+        while (timer < transitionTime)
         {
-            eval = Mathf.PingPong(Time.time * 0.1f, 1);
-            potsMarbleMat.color = marbleColorGr.Evaluate(eval);
-            yield return new WaitForSeconds(Time.deltaTime);
+            timer += Time.deltaTime;
+            float t = timer / transitionTime;
+
+            material.color = Color.Lerp(firstColor, secondColor, t);
+
+            yield return null;
         }
+        material.color = secondColor;
     }
 }

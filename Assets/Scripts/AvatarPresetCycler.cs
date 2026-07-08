@@ -13,6 +13,10 @@ public static class AvatarSelection
 public class AvatarPresetCycler : MonoBehaviour
 {
     [SerializeField] private GameObject metaAvatarObject;
+    [SerializeField] private GameObject avatarPreviewB2;
+    [SerializeField] private GameObject avatarPreviewB1;
+    [SerializeField] private GameObject avatarPreviewF1;
+    [SerializeField] private GameObject avatarPreviewF2;
     [SerializeField] private int presetCount = 33;
     [SerializeField] private string presetNamePrefix = "";
     [SerializeField] private string nextSceneName = "MainScene";
@@ -25,11 +29,19 @@ public class AvatarPresetCycler : MonoBehaviour
 
     private int selectedPresetIndex = 0;
     private SampleAvatarEntity _entity;
+    private SampleAvatarEntity _entityB2;
+    private SampleAvatarEntity _entityB1;
+    private SampleAvatarEntity _entityF1;
+    private SampleAvatarEntity _entityF2;
     //private bool _isLoading = false;
 
     private void Awake()
     {
         _entity = metaAvatarObject.GetComponent<SampleAvatarEntity>();
+        _entityB2 = avatarPreviewB2.GetComponent<SampleAvatarEntity>();
+        _entityB1 = avatarPreviewB1.GetComponent<SampleAvatarEntity>();
+        _entityF1 = avatarPreviewF1.GetComponent<SampleAvatarEntity>();
+        _entityF2 = avatarPreviewF2.GetComponent<SampleAvatarEntity>();
 
         if (nextButton != null) nextButton.onClick.AddListener(Next);
         if (previousButton != null) previousButton.onClick.AddListener(Previous);
@@ -39,7 +51,7 @@ public class AvatarPresetCycler : MonoBehaviour
     private void Start()
     {
         _entity.OnUserAvatarLoadedEvent.AddListener(OnAvatarLoaded);
-        //LoadPresetAtIndex(selectedPresetIndex);
+        LoadPresetAtIndex(selectedPresetIndex);
     }
 
     private void OnDestroy()
@@ -90,8 +102,11 @@ public class AvatarPresetCycler : MonoBehaviour
         SetButtonsInteractable(false);
         if (confirmButton != null) confirmButton.interactable = false;
 
-        string assetPath = $"{presetNamePrefix}{index}";
-        _entity.ReloadAvatarManually(assetPath, AssetSource.Zip);
+        _entity.ReloadAvatarManually($"{presetNamePrefix}{index}", AssetSource.Zip);
+        _entityB2.ReloadAvatarManually($"{presetNamePrefix}{(index - 2 + presetCount) % presetCount}", AssetSource.Zip);
+        _entityB1.ReloadAvatarManually($"{presetNamePrefix}{(index - 1 + presetCount) % presetCount}", AssetSource.Zip);
+        _entityF1.ReloadAvatarManually($"{presetNamePrefix}{(index + 1) % presetCount}", AssetSource.Zip);
+        _entityF2.ReloadAvatarManually($"{presetNamePrefix}{(index + 2) % presetCount}", AssetSource.Zip);
 
         //_isLoading = false;
 

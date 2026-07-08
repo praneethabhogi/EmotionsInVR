@@ -15,7 +15,7 @@ EditorBuildSettings:
     path: Assets/Scenes/StartScene.unity
     guid: 7f298dc9a4c997b479cd72f50064a0cc
   - enabled: 1
-    path: Assets/Scenes/mirror.unity
+    path: Assets/Scenes/AvatarSelection.unity
     guid: 507b10cb2e493c74a9feaf51ab5c4e46
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

@@ -1,8 +1,10 @@
+using Meta.XR.BuildingBlocks.AIBlocks;
+using System;
 using TMPro;
 using UnityEngine;
-using Meta.XR.BuildingBlocks.AIBlocks;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
-using System;
+using UnityEngine.XR.Interaction.Toolkit.Inputs.Simulation;
 
 public class SpeechToText : MonoBehaviour
 {
@@ -10,10 +12,15 @@ public class SpeechToText : MonoBehaviour
     public SpeechToTextAgent speechToText;
     public GameObject STTCanvas;
     public TMP_Text transcribed_text;
-    public Button startButton;
-    public Button stopButton;
-    public Button doneButton;
+    public TMP_Text startStopText;
+    //public Button startButton;
+    //public Button stopButton;
+    //public Button doneButton;
     public TMP_Text timer;
+    public InputActionReference X;
+    public InputActionReference Y;
+
+
 
     public GameObject Player;
 
@@ -22,23 +29,31 @@ public class SpeechToText : MonoBehaviour
     public float time = 120.0f;
     void Start()
     { 
-        startButton.onClick.AddListener(listen);
-        stopButton.onClick.AddListener(stop);
-        doneButton.onClick.AddListener(done);
+        //startButton.onClick.AddListener(listen);
+        //stopButton.onClick.AddListener(stop);
+        //doneButton.onClick.AddListener(done);
         speechToText.onTranscript.AddListener(OnTranscript);
-        stopButton.gameObject.SetActive(false);
-        doneButton.gameObject.SetActive(false);
+        //stopButton.gameObject.SetActive(false);
+        //doneButton.gameObject.SetActive(false);
         STTCanvas.SetActive(false);
+
+      
+        X.action.Enable();
+        X.action.performed += (ctx) => listenToggle();
+
+        Y.action.Enable();
+        Y.action.performed += (ctx) => done();
     }
 
     public void Spawn()
     {
-        Transform cam = Camera.main.transform;
-        Vector3 spawnPos = cam.position + cam.forward;
-        Quaternion spawnRot = Quaternion.LookRotation(cam.forward);
+        Debug.Log("[STT] Spawn");
+        Canvas canvas = STTCanvas.GetComponent<Canvas>();
 
-        STTCanvas.transform.position = spawnPos;
-        STTCanvas.transform.rotation = spawnRot;
+        Debug.Log($"Render Mode: {canvas.renderMode}");
+        Debug.Log($"Camera: {canvas.worldCamera}");
+        Debug.Log($"Plane Distance: {canvas.planeDistance}");
+        Debug.Log($"Position: {STTCanvas.transform.position}");
         STTCanvas.SetActive(true);
     }
 
@@ -54,39 +69,50 @@ public class SpeechToText : MonoBehaviour
             {
                 timer.text = "0.00";
                 stop();
-                startButton.gameObject.SetActive(false);
+                //startButton.gameObject.SetActive(false);
             }
             
         }
     }
 
-    public void UpdatePosition()
+    public void listenToggle()
     {
+        if (!STTCanvas.activeInHierarchy) return;
 
-    }
-
-    public void listen()
-    {
-        listening = true;
-        speechToText.StartListening();
-        stopButton.gameObject.SetActive(true);
-        startButton.gameObject.SetActive(false);
-        doneButton.gameObject.SetActive(true);
-        doneButton.enabled = false;
+        if (listening)
+        {
+            startStopText.text = "[X] Start";
+            speechToText.StopNow();
+            listening = false;
+        }
+        else
+        {
+            startStopText.text = "[X] Pause";
+            listening = true;
+            speechToText.StartListening();
+        }
+        Debug.Log("[STT] listen");
+        
+        //stopButton.gameObject.SetActive(true);
+        //startButton.gameObject.SetActive(false);
+        //doneButton.gameObject.SetActive(true);
+        //doneButton.enabled = false;
     }
 
     public void stop()
     {
+        Debug.Log("[STT] stop");
         speechToText.StopNow();
-        stopButton.gameObject.SetActive(false);
-        startButton.gameObject.SetActive(true);
+        //stopButton.gameObject.SetActive(false);
+        //startButton.gameObject.SetActive(true);
         listening = false;
-        doneButton.enabled = true;
+        //doneButton.enabled = true;
         // can trigger something here to send transcript to llm
     }
 
     public void OnTranscript(string transcript)
     {
+        Debug.Log("[STT] on transcript");
         if (fullTranscript == null || fullTranscript.Length == 0)
         {
             fullTranscript = transcript;
@@ -100,17 +126,27 @@ public class SpeechToText : MonoBehaviour
 
     public void restart()
     {
+        Debug.Log("[STT] restart");
         stop();
         time = 120.0f;
+        timer.text = "120.00";
         fullTranscript = "";
         transcribed_text.text = "Your transcript will appear here";
     }
 
     public void done()
     {
-        OnSpeechFinished?.Invoke(fullTranscript);
-        restart();
-        STTCanvas.SetActive(false);
+        if (STTCanvas.activeInHierarchy)
+        {
+            Debug.Log("[STT] done");
+            STTCanvas.SetActive(false);
+
+            string transcript = fullTranscript;
+
+            restart();
+
+            OnSpeechFinished?.Invoke(transcript);
+        }
     }
 
 }

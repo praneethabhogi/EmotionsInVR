@@ -25,7 +25,7 @@ public class SpeechToText : MonoBehaviour
     public GameObject Player;
 
     private bool listening = false;
-    private string fullTranscript;
+    private string fullTranscript = "";
     public float time = 120.0f;
     void Start()
     { 
@@ -38,10 +38,9 @@ public class SpeechToText : MonoBehaviour
         STTCanvas.SetActive(false);
 
       
-        X.action.Enable();
+
         X.action.performed += (ctx) => listenToggle();
 
-        Y.action.Enable();
         Y.action.performed += (ctx) => done();
     }
 
@@ -49,12 +48,9 @@ public class SpeechToText : MonoBehaviour
     {
         Debug.Log("[STT] Spawn");
         Canvas canvas = STTCanvas.GetComponent<Canvas>();
-
-        Debug.Log($"Render Mode: {canvas.renderMode}");
-        Debug.Log($"Camera: {canvas.worldCamera}");
-        Debug.Log($"Plane Distance: {canvas.planeDistance}");
-        Debug.Log($"Position: {STTCanvas.transform.position}");
         STTCanvas.SetActive(true);
+        X.action.Enable();
+        Y.action.Enable();
     }
 
     private void Update()
@@ -132,6 +128,8 @@ public class SpeechToText : MonoBehaviour
         timer.text = "120.00";
         fullTranscript = "";
         transcribed_text.text = "Your transcript will appear here";
+        X.action.Disable();
+        Y.action.Disable();
     }
 
     public void done()

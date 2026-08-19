@@ -1,9 +1,11 @@
 using Oculus.Avatar2;
 using Oculus.Interaction.Input;
 using Oculus.Interaction.Locomotion;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using TMPro;
 using Unity.Collections;
@@ -25,6 +27,7 @@ public class NPCTutorial : MonoBehaviour
     public GameObject retryCanvas;
     public TMP_Text dialogueText;
     public Animator plantAnimator;
+    public Animator doorAnimator;
     public SpeechToText STT;
 
     public InputActionReference X;
@@ -50,6 +53,8 @@ public class NPCTutorial : MonoBehaviour
     private string fullText;
     private int charInd;
     private bool isTyping = false;
+
+    private float maxSentences = 5.0f;
     
 
     private TutorialState state = TutorialState.Idle;
@@ -76,7 +81,7 @@ public class NPCTutorial : MonoBehaviour
     {
         if (isTyping)
         {
-            if (charInd < fullText.Length)
+            if (charInd <= fullText.Length)
             {
                 currentText = fullText.Substring(0,charInd);
                 dialogueText.text = currentText;
@@ -180,23 +185,71 @@ public class NPCTutorial : MonoBehaviour
         plantAnimator.gameObject.SetActive(false);
         state = TutorialState.Idle;
         dialogueCanvas.SetActive(false);
+        dialogueText.text = "";
         received = false;
     }
 
-    public void Bloom()
+    //public void Bloom()
+    //{
+    //    plantAnimator.gameObject.SetActive(true);
+    //    plantAnimator.Play("tutorial_grow");
+    //}
+
+    public IEnumerator Bloom(float amount, string animName)
     {
+        amount = Mathf.Clamp01(amount);
+        Debug.Log($"Bloom: targeting {amount} normalized time");
+
+        plantAnimator.speed = 1f; // ensure speed is normal if previously frozen
         plantAnimator.gameObject.SetActive(true);
-        plantAnimator.Play("tutorial_grow");
+        plantAnimator.Play(animName, 0, 0f);
+
+        yield return null;
+        yield return null;
+
+        AnimatorStateInfo stateInfo = plantAnimator.GetCurrentAnimatorStateInfo(0);
+        float clipLength = stateInfo.length;
+
+        if (clipLength <= 0f)
+        {
+            Debug.LogWarning("Bloom: clip length is 0, check animator state name");
+            yield break;
+        }
+
+        float elapsed = 0f;
+        while (elapsed < amount)
+        {
+            elapsed += (Time.deltaTime / clipLength);
+            elapsed = Mathf.Min(elapsed, amount);
+            plantAnimator.Play(animName, 0, elapsed);
+            yield return null;
+        }
+
+        // Stop the animator from advancing any further
+        plantAnimator.speed = 0f;
+        plantAnimator.Play(animName, 0, amount);
+
+        Debug.Log($"Bloom: frozen at normalized time {amount}");
+
     }
 
     public void HandleSpeech(string text)
     {
+        if (state != TutorialState.WaitingForSpeech) return;
         Debug.Log($"TUTORIAL handling speech {text}");
         string stripped = Regex.Replace(text, @"\[.*?\]", "");
         if (!string.IsNullOrWhiteSpace(stripped))
         {
+            string[] sentences = stripped.Split(new char[] { '.', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
+
+            int sentenceCount = sentences.Length;
+            // add speech length threshold here to determine bloom
             dialogueLines = CompletedLines;
-            Bloom();
+            plantAnimator.gameObject.SetActive(true);
+            doorAnimator.Play("doorOpen");
+            //Bloom();
+            Debug.Log(sentenceCount / maxSentences);
+            StartCoroutine(Bloom(sentenceCount/maxSentences, "tutorial_grow"));
         }
         else
         {
@@ -210,13 +263,13 @@ public class NPCTutorial : MonoBehaviour
     private void FreezePlayer()
     {
 
-        Vector3 direction = npc.position - player.position;
-        direction.y = 0;
-        if (direction != Vector3.zero)
-        {
-            player.rotation = Quaternion.LookRotation(direction);
-            player.rotation = player.rotation * Quaternion.Euler(direction);
-        }
+        //Vector3 direction = player.position - npc.position;
+        //direction.y = 0;
+        //if (direction != Vector3.zero)
+        //{
+        //    player.rotation = Quaternion.LookRotation(direction);
+        //    player.rotation = player.rotation * Quaternion.Euler(direction);
+        //}
         playerController.SetActive(false);
         LeftJoystick.action.Disable();
         RightJoystick.action.Disable();
@@ -230,7 +283,6 @@ public class NPCTutorial : MonoBehaviour
     {
         Y.action.Disable();
         X.action.Disable();
-        
 
         if (PlayerBody != null)
         {
@@ -238,9 +290,26 @@ public class NPCTutorial : MonoBehaviour
             PlayerBody.angularVelocity = Vector3.zero;
         }
 
+        // Wait until all relevant inputs are physically released
+        yield return new WaitUntil(() =>
+        {
+            Vector2 left = OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick);
+            Vector2 right = OVRInput.Get(OVRInput.Axis2D.SecondaryThumbstick);
+            bool jumpHeld = OVRInput.Get(OVRInput.Button.One) || OVRInput.Get(OVRInput.Button.Three);
+            return left.magnitude < 0.1f && right.magnitude < 0.1f && !jumpHeld;
+        });
+
+        // Extra frame after inputs are neutral to let OVR flush
+        yield return null;
         yield return null;
 
         playerController.SetActive(true);
+
+        if (PlayerBody != null)
+        {
+            PlayerBody.linearVelocity = Vector3.zero;
+            PlayerBody.angularVelocity = Vector3.zero;
+        }
 
         Y.action.Enable();
         X.action.Enable();

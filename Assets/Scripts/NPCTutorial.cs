@@ -37,7 +37,7 @@ public class NPCTutorial : MonoBehaviour
 
     [SerializeField] private List<string> StartingLines;
     [SerializeField] private List<string> CompletedLines;
-    [SerializeField] private List<string> RetryLines;
+    //[SerializeField] private List<string> RetryLines;
 
     private bool received = false;
 
@@ -251,10 +251,10 @@ public class NPCTutorial : MonoBehaviour
             Debug.Log(sentenceCount / maxSentences);
             StartCoroutine(Bloom(sentenceCount/maxSentences, "tutorial_grow"));
         }
-        else
-        {
-            dialogueLines = RetryLines;
-        }
+        //else
+        //{
+        //    dialogueLines = RetryLines;
+        //}
         received = true;
         StartDialogue();
         state = TutorialState.Dialogue;

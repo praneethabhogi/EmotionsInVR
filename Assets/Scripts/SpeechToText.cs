@@ -1,10 +1,12 @@
 using Meta.XR.BuildingBlocks.AIBlocks;
 using System;
+using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.Inputs.Simulation;
+using static System.Net.Mime.MediaTypeNames;
 
 public class SpeechToText : MonoBehaviour
 {
@@ -13,6 +15,7 @@ public class SpeechToText : MonoBehaviour
     public GameObject STTCanvas;
     public TMP_Text transcribed_text;
     public TMP_Text startStopText;
+    public GameObject finishText;
     //public Button startButton;
     //public Button stopButton;
     //public Button doneButton;
@@ -36,11 +39,11 @@ public class SpeechToText : MonoBehaviour
         //stopButton.gameObject.SetActive(false);
         //doneButton.gameObject.SetActive(false);
         STTCanvas.SetActive(false);
+        finishText.SetActive(false);
 
-      
-
+        X.action.Enable();
         X.action.performed += (ctx) => listenToggle();
-
+        Y.action.Enable();
         Y.action.performed += (ctx) => done();
     }
 
@@ -49,8 +52,6 @@ public class SpeechToText : MonoBehaviour
         Debug.Log("[STT] Spawn");
         Canvas canvas = STTCanvas.GetComponent<Canvas>();
         STTCanvas.SetActive(true);
-        X.action.Enable();
-        Y.action.Enable();
     }
 
     private void Update()
@@ -73,6 +74,7 @@ public class SpeechToText : MonoBehaviour
 
     public void listenToggle()
     {
+        Debug.Log("[STT] triggered listen");
         if (!STTCanvas.activeInHierarchy) return;
 
         if (listening)
@@ -83,6 +85,7 @@ public class SpeechToText : MonoBehaviour
         }
         else
         {
+            finishText.SetActive(true);
             startStopText.text = "[X] Pause";
             listening = true;
             speechToText.StartListening();
@@ -102,6 +105,7 @@ public class SpeechToText : MonoBehaviour
         //stopButton.gameObject.SetActive(false);
         //startButton.gameObject.SetActive(true);
         listening = false;
+        
         //doneButton.enabled = true;
         // can trigger something here to send transcript to llm
     }
@@ -128,13 +132,12 @@ public class SpeechToText : MonoBehaviour
         timer.text = "120.00";
         fullTranscript = "";
         transcribed_text.text = "Your transcript will appear here";
-        X.action.Disable();
-        Y.action.Disable();
     }
 
     public void done()
     {
-        if (STTCanvas.activeInHierarchy)
+        string stripped = Regex.Replace(fullTranscript, @"\[.*?\]", "");
+        if (STTCanvas.activeInHierarchy  && !string.IsNullOrWhiteSpace(stripped))
         {
             Debug.Log("[STT] done");
             STTCanvas.SetActive(false);

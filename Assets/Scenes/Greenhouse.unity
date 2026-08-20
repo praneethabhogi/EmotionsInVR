@@ -1224,6 +1224,7 @@ MonoBehaviour:
   STTCanvas: {fileID: 2914915550206666483}
   transcribed_text: {fileID: 6693343353448131243}
   startStopText: {fileID: 346535981}
+  finishText: {fileID: 551955882}
   timer: {fileID: 7107636656093424699}
   X: {fileID: 5113088590926889233, guid: e0ca4504471ca124088e1e2cfe6804ae, type: 3}
   Y: {fileID: -631344258065148156, guid: e0ca4504471ca124088e1e2cfe6804ae, type: 3}
@@ -4167,6 +4168,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 305471678}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &551955882 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 507923180630308239, guid: 68bf8194cfb88c144bd283f3f4e63a92, type: 3}
+  m_PrefabInstance: {fileID: 8916472105743220166}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &566225728
 GameObject:
   m_ObjectHideFlags: 0
@@ -4430,6 +4436,7 @@ MonoBehaviour:
   retryCanvas: {fileID: 785946444}
   dialogueText: {fileID: 845320267}
   plantAnimator: {fileID: 588050816}
+  animationName: B1A
   STT: {fileID: 111859778}
   X: {fileID: 5113088590926889233, guid: e0ca4504471ca124088e1e2cfe6804ae, type: 3}
   Y: {fileID: -631344258065148156, guid: e0ca4504471ca124088e1e2cfe6804ae, type: 3}
@@ -4438,7 +4445,7 @@ MonoBehaviour:
   StartingLines:
   - Tell me about something good that happened today.
   CompletedLines:
-  - Thanks.
+  - Thank you.
   RetryLines:
   - No worries.
   maxSentences: 3
@@ -6027,7 +6034,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1600025886383962864, guid: 72af4453471f516469d7ed9090e47ba5, type: 3}
       propertyPath: m_Name
-      value: TryAgainCanvas
+      value: RetryCanvas
       objectReference: {fileID: 0}
     - target: {fileID: 1600025886383962864, guid: 72af4453471f516469d7ed9090e47ba5, type: 3}
       propertyPath: m_IsActive
@@ -8342,9 +8349,6 @@ MonoBehaviour:
   - They don't all grow from the same things.
   - Why don't you look around?
   - You might find one that wants to hear something from you.
-  RetryLines:
-  - 'That''s okay. '
-  - I'll always be here to listen when you're ready to share.
   playerController: {fileID: 900734943}
   PlayerBody: {fileID: 628210044}
   player: {fileID: 236884915}
@@ -12000,6 +12004,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4683426129846163898, guid: d482cf20b4be5f04bad0b6700042dc92, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7053446007172288875, guid: d482cf20b4be5f04bad0b6700042dc92, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8839180734984124974, guid: d482cf20b4be5f04bad0b6700042dc92, type: 3}
@@ -19299,7 +19307,7 @@ PrefabInstance:
     - target: {fileID: 4702516605638758960, guid: 91ba528e65fae8d4eb7f6f4fbeb7d335, type: 3}
       propertyPath: PlayerTarget
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 236884915}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -19350,7 +19358,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7334850832513335298, guid: 68bf8194cfb88c144bd283f3f4e63a92, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7360542708157143383, guid: 68bf8194cfb88c144bd283f3f4e63a92, type: 3}
       propertyPath: m_Pivot.x

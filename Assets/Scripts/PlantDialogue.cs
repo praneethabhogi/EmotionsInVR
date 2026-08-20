@@ -23,6 +23,7 @@ public class PlantDialogue : MonoBehaviour
     public GameObject retryCanvas;
     public TMP_Text dialogueText;
     public Animator plantAnimator;
+    public string animationName;
     public SpeechToText STT;
 
     public InputActionReference X;
@@ -65,6 +66,11 @@ public class PlantDialogue : MonoBehaviour
         X.action.Enable();
         X.action.performed += (ctx) => restart();
 
+        if (plantAnimator != null)
+        {
+            plantAnimator.speed = 0;
+            plantAnimator.Play(animationName);
+        }
         //plantAnimator.gameObject.SetActive(false);
         dialogueCanvas.SetActive(false);
         retryCanvas.SetActive(false);
@@ -146,8 +152,6 @@ public class PlantDialogue : MonoBehaviour
                         retryCanvas.SetActive(true);
                         return;
                     }
-                    Y.action.Disable();
-                    X.action.Disable();
                     dialogueCanvas.SetActive(false);
                     STT.Spawn();
                     state = TutorialState.WaitingForSpeech;
@@ -176,6 +180,8 @@ public class PlantDialogue : MonoBehaviour
         retryCanvas.SetActive(false);
         UnfreezePlayer();
         //plantAnimator.gameObject.SetActive(false);
+        plantAnimator.speed = 0;
+        plantAnimator.Play(animationName);
         state = TutorialState.Idle;
         dialogueCanvas.SetActive(false);
         received = false;
@@ -229,14 +235,13 @@ public class PlantDialogue : MonoBehaviour
             dialogueLines = CompletedLines;
             //Bloom();
             Debug.Log(sentenceCount / maxSentences);
-            StartCoroutine(Bloom(sentenceCount / maxSentences, "tutorial_grow"));
+            StartCoroutine(Bloom(sentenceCount / maxSentences, animationName));
         }
         else
         {
             dialogueLines = RetryLines;
         }
-        Y.action.Enable();
-        X.action.Enable();
+
         received = true;
         StartDialogue();
         state = TutorialState.Dialogue;

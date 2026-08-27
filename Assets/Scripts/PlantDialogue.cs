@@ -26,10 +26,10 @@ public class PlantDialogue : MonoBehaviour
     public string animationName;
     public SpeechToText STT;
 
-    public InputActionReference X;
-    public InputActionReference Y;
-    public InputActionReference LeftJoystick;
-    public InputActionReference RightJoystick;
+    private InputActionReference X;
+    private InputActionReference Y;
+    private InputActionReference LeftJoystick;
+    private InputActionReference RightJoystick;
 
     [SerializeField] private List<string> StartingLines;
     [SerializeField] private List<string> CompletedLines;
@@ -54,6 +54,7 @@ public class PlantDialogue : MonoBehaviour
     private TutorialState state = TutorialState.Idle;
     void Start()
     {
+        
         if (button != null)
         {
             button.onClick.AddListener(Interact);
@@ -153,7 +154,7 @@ public class PlantDialogue : MonoBehaviour
                         return;
                     }
                     dialogueCanvas.SetActive(false);
-                    STT.Spawn();
+                    STT.Spawn(plantAnimator, animationName, maxSentences);
                     state = TutorialState.WaitingForSpeech;
                 }
             }

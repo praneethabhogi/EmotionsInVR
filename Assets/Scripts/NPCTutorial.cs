@@ -27,7 +27,7 @@ public class NPCTutorial : MonoBehaviour
     public GameObject retryCanvas;
     public TMP_Text dialogueText;
     public Animator plantAnimator;
-    public Animator doorAnimator;
+    public Door door;
     public SpeechToText STT;
 
     public InputActionReference X;
@@ -36,10 +36,11 @@ public class NPCTutorial : MonoBehaviour
     public InputActionReference RightJoystick;
 
     [SerializeField] private List<string> StartingLines;
-    [SerializeField] private List<string> CompletedLines;
-    //[SerializeField] private List<string> RetryLines;
+    [SerializeField] private List<string> FinishedLines;
+    [SerializeField] private List<string> ContinueLines;
 
     private bool received = false;
+    private bool continuing = false;
 
     [Header("Player")]
     public GameObject playerController;
@@ -112,6 +113,7 @@ public class NPCTutorial : MonoBehaviour
         Debug.Log($"TUTORIAL starting dialogue lines {dialogueLines.Count}");
         currentLine = 0;
         StartLine();
+        state = TutorialState.Dialogue;
         dialogueCanvas.SetActive(true);
     }
 
@@ -123,7 +125,6 @@ public class NPCTutorial : MonoBehaviour
         fullText = dialogueLines[currentLine];
         charInd = 0;
         isTyping = true;
-        state = TutorialState.Dialogue;
     }
 
     public void Continue()
@@ -150,12 +151,23 @@ public class NPCTutorial : MonoBehaviour
                     if (received)
                     {
                         dialogueCanvas.SetActive(false);
-                        state = TutorialState.AskingRetry;
-                        retryCanvas.SetActive(true);
-                        return;
+                        if (continuing) 
+                        { // ending tutorial
+                            UnfreezePlayer();
+                            state = TutorialState.Finished;
+                            door.UnlockDoor();
+                            return;
+                        }
+                        else 
+                        {
+                            state = TutorialState.AskingRetry;
+                            retryCanvas.SetActive(true);
+                            return;
+                        }
+                        
                     }
                     dialogueCanvas.SetActive(false);
-                    STT.Spawn();
+                    STT.Spawn(plantAnimator, "tutorial_grow", 5.0f);
                     state = TutorialState.WaitingForSpeech;
                 }
             }    
@@ -164,8 +176,10 @@ public class NPCTutorial : MonoBehaviour
         {
             Debug.Log($"TUTORIAL continuing no retry");
             retryCanvas.SetActive(false);
-            UnfreezePlayer();
-            state = TutorialState.Finished;
+            
+            dialogueLines = ContinueLines;
+            continuing = true;
+            StartDialogue();
         }
     }
 
@@ -238,26 +252,16 @@ public class NPCTutorial : MonoBehaviour
         if (state != TutorialState.WaitingForSpeech) return;
         Debug.Log($"TUTORIAL handling speech {text}");
         string stripped = Regex.Replace(text, @"\[.*?\]", "");
-        if (!string.IsNullOrWhiteSpace(stripped))
-        {
-            string[] sentences = stripped.Split(new char[] { '.', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
+        string[] sentences = stripped.Split(new char[] { '.', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
 
-            int sentenceCount = sentences.Length;
-            // add speech length threshold here to determine bloom
-            dialogueLines = CompletedLines;
-            plantAnimator.gameObject.SetActive(true);
-            doorAnimator.Play("doorOpen");
-            //Bloom();
-            Debug.Log(sentenceCount / maxSentences);
-            StartCoroutine(Bloom(sentenceCount/maxSentences, "tutorial_grow"));
-        }
-        //else
-        //{
-        //    dialogueLines = RetryLines;
-        //}
+        int sentenceCount = sentences.Length;
+        dialogueLines = FinishedLines;
+        plantAnimator.gameObject.SetActive(true);
+        Debug.Log(sentenceCount / maxSentences);
+        // StartCoroutine(Bloom(sentenceCount/maxSentences, "tutorial_grow"));
+
         received = true;
         StartDialogue();
-        state = TutorialState.Dialogue;
     }
 
     private void FreezePlayer()

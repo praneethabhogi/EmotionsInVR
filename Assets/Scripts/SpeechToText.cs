@@ -5,11 +5,21 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using System.Collections;
+
 using UnityEngine.XR.Interaction.Toolkit.Inputs.Simulation;
 using static System.Net.Mime.MediaTypeNames;
 
+#if UNITY_ANDROID
+using UnityEngine.Android;
+#endif
+
+
 public class SpeechToText : MonoBehaviour
 {
+    private Animator plantAnimator;
+    private string animName;
+    private float fullSentences;
     public event Action<string> OnSpeechFinished;
     public SpeechToTextAgent speechToText;
     public GameObject STTCanvas;
@@ -32,6 +42,18 @@ public class SpeechToText : MonoBehaviour
     public float time = 120.0f;
     void Start()
     { 
+
+        #if UNITY_ANDROID
+            if (!Permission.HasUserAuthorizedPermission(Permission.Microphone))
+            {
+                Debug.Log("[STT] Requesting microphone permission");
+                Permission.RequestUserPermission(Permission.Microphone);
+            }
+            else
+            {
+                Debug.Log("[STT] Microphone permission already granted");
+            }
+        #endif
         //startButton.onClick.AddListener(listen);
         //stopButton.onClick.AddListener(stop);
         //doneButton.onClick.AddListener(done);
@@ -47,9 +69,12 @@ public class SpeechToText : MonoBehaviour
         Y.action.performed += (ctx) => done();
     }
 
-    public void Spawn()
+    public void Spawn(Animator anim, string name, float sentences)
     {
+        fullSentences = sentences;
         Debug.Log("[STT] Spawn");
+        plantAnimator = anim;
+        animName = name;
         Canvas canvas = STTCanvas.GetComponent<Canvas>();
         STTCanvas.SetActive(true);
     }
@@ -65,7 +90,8 @@ public class SpeechToText : MonoBehaviour
             } else
             {
                 timer.text = "0.00";
-                stop();
+                fullTranscript = "empty";
+                done();
                 //startButton.gameObject.SetActive(false);
             }
             
@@ -121,6 +147,13 @@ public class SpeechToText : MonoBehaviour
             fullTranscript += "\n" + transcript;
         }
         transcribed_text.text = fullTranscript;
+
+        // calculate bloom
+        string stripped = Regex.Replace(transcript, @"\[.*?\]", "");
+        string[] sentences = stripped.Split(new char[] { '.', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
+
+        int sentenceCount = sentences.Length;
+        StartCoroutine(Bloom(sentenceCount));
         
     }
 
@@ -148,6 +181,55 @@ public class SpeechToText : MonoBehaviour
 
             OnSpeechFinished?.Invoke(transcript);
         }
+    }
+
+    private float currentBloom = 0f;
+
+    public IEnumerator Bloom(float amount)
+    {
+        amount = Mathf.Clamp01(amount/fullSentences);
+
+        float targetBloom = Mathf.Clamp01(currentBloom + amount);
+
+        Debug.Log($"Bloom: growing from {currentBloom} to {targetBloom}");
+
+        plantAnimator.speed = 1f;
+        plantAnimator.gameObject.SetActive(true);
+
+        plantAnimator.Play(animName, 0, currentBloom);
+
+        yield return null;
+        yield return null;
+
+        AnimatorStateInfo stateInfo = plantAnimator.GetCurrentAnimatorStateInfo(0);
+        float clipLength = stateInfo.length;
+
+        if (clipLength <= 0f)
+        {
+            Debug.LogWarning("Bloom: clip length is 0, check animator state name");
+            yield break;
+        }
+
+        float elapsed = currentBloom;
+
+        while (elapsed < targetBloom)
+        {
+            elapsed += Time.deltaTime / clipLength;
+            elapsed = Mathf.Min(elapsed, targetBloom);
+
+            plantAnimator.Play(animName, 0, elapsed);
+
+            yield return null;
+        }
+
+        // Save the new total growth
+        currentBloom = targetBloom;
+
+        // Freeze at the new growth amount
+        plantAnimator.speed = 0f;
+        plantAnimator.Play(animName, 0, currentBloom);
+
+        Debug.Log($"Bloom: total growth is now {currentBloom}");
     }
 
 }

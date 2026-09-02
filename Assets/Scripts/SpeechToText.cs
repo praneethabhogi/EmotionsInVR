@@ -27,6 +27,9 @@ public class SpeechToText : MonoBehaviour
 
     public GameObject Player;
 
+    public Animator gardenerAnimator;
+    private static readonly int GestureHash = Animator.StringToHash("Gesture");
+
     private bool listening = false;
     private string fullTranscript = "";
     public float time = 120.0f;
@@ -143,6 +146,10 @@ public class SpeechToText : MonoBehaviour
             STTCanvas.SetActive(false);
 
             string transcript = fullTranscript;
+
+            if (gardenerAnimator != null) {
+                gardenerAnimator.SetTrigger(GestureHash);
+            }
 
             restart();
 

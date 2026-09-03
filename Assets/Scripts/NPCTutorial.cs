@@ -27,6 +27,8 @@ public class NPCTutorial : MonoBehaviour
     public GameObject retryCanvas;
     public TMP_Text dialogueText;
     public Animator plantAnimator;
+    public Animator gardenerAnimator;
+    private static readonly int GestureHash = Animator.StringToHash("Gesture");
     public Door door;
     public SpeechToText STT;
 
@@ -153,6 +155,7 @@ public class NPCTutorial : MonoBehaviour
                         dialogueCanvas.SetActive(false);
                         if (continuing)
                         { // ending tutorial
+                            if (gardenerAnimator != null) gardenerAnimator.Play("Gesture");
                             UnfreezePlayer();
                             state = TutorialState.Finished;
                             door.UnlockDoor();
@@ -179,6 +182,7 @@ public class NPCTutorial : MonoBehaviour
 
             dialogueLines = ContinueLines;
             continuing = true;
+            if (gardenerAnimator != null) gardenerAnimator.Play("Gesture");
             StartDialogue();
         }
     }
@@ -259,6 +263,7 @@ public class NPCTutorial : MonoBehaviour
         plantAnimator.gameObject.SetActive(true);
         Debug.Log(sentenceCount / maxSentences);
         // StartCoroutine(Bloom(sentenceCount/maxSentences, "tutorial_grow"));
+        STT.OnSpeechFinished -= HandleSpeech;
 
         received = true;
         StartDialogue();

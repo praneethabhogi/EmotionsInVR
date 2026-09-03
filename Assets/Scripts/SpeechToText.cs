@@ -71,11 +71,20 @@ public class SpeechToText : MonoBehaviour
 
     public void Spawn(Animator anim, string name, float sentences)
     {
+        stop();
         fullSentences = sentences;
         Debug.Log("[STT] Spawn");
         plantAnimator = anim;
         animName = name;
-        Canvas canvas = STTCanvas.GetComponent<Canvas>();
+        time = 120.0f;
+        timer.text = "120.00";
+
+        fullTranscript = "";
+        transcribed_text.text = "Your transcript will appear here";
+
+        listening = false;
+        finishText.SetActive(false);
+
         STTCanvas.SetActive(true);
     }
 
@@ -168,6 +177,8 @@ public class SpeechToText : MonoBehaviour
         fullTranscript = "";
         transcribed_text.text = "Your transcript will appear here";
         currentBloom = 0f;
+        finishText.SetActive(false);
+
     }
 
     public void done()

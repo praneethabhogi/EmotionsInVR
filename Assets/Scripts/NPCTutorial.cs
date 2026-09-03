@@ -27,6 +27,8 @@ public class NPCTutorial : MonoBehaviour
     public GameObject retryCanvas;
     public TMP_Text dialogueText;
     public Animator plantAnimator;
+    public Animator gardenerAnimator;
+    private static readonly int GestureHash = Animator.StringToHash("Gesture");
     public Door door;
     public SpeechToText STT;
 
@@ -56,7 +58,7 @@ public class NPCTutorial : MonoBehaviour
     private bool isTyping = false;
 
     private float maxSentences = 5.0f;
-    
+
 
     private TutorialState state = TutorialState.Idle;
     void Start()
@@ -84,7 +86,7 @@ public class NPCTutorial : MonoBehaviour
         {
             if (charInd <= fullText.Length)
             {
-                currentText = fullText.Substring(0,charInd);
+                currentText = fullText.Substring(0, charInd);
                 dialogueText.text = currentText;
                 charInd += 1;
             }
@@ -151,34 +153,36 @@ public class NPCTutorial : MonoBehaviour
                     if (received)
                     {
                         dialogueCanvas.SetActive(false);
-                        if (continuing) 
+                        if (continuing)
                         { // ending tutorial
+                            if (gardenerAnimator != null) gardenerAnimator.Play("Gesture");
                             UnfreezePlayer();
                             state = TutorialState.Finished;
                             door.UnlockDoor();
                             return;
                         }
-                        else 
+                        else
                         {
                             state = TutorialState.AskingRetry;
                             retryCanvas.SetActive(true);
                             return;
                         }
-                        
+
                     }
                     dialogueCanvas.SetActive(false);
                     STT.Spawn(plantAnimator, "tutorial_grow", 5.0f);
                     state = TutorialState.WaitingForSpeech;
                 }
-            }    
+            }
         }
         else if (state == TutorialState.AskingRetry)
         {
             Debug.Log($"TUTORIAL continuing no retry");
             retryCanvas.SetActive(false);
-            
+
             dialogueLines = ContinueLines;
             continuing = true;
+            if (gardenerAnimator != null) gardenerAnimator.Play("Gesture");
             StartDialogue();
         }
     }
@@ -259,6 +263,7 @@ public class NPCTutorial : MonoBehaviour
         plantAnimator.gameObject.SetActive(true);
         Debug.Log(sentenceCount / maxSentences);
         // StartCoroutine(Bloom(sentenceCount/maxSentences, "tutorial_grow"));
+        STT.OnSpeechFinished -= HandleSpeech;
 
         received = true;
         StartDialogue();

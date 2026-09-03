@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Meta.XR.BuildingBlocks.AIBlocks::Meta.XR.BuildingBlocks.AIBlocks.ElevenLabsProvider
   supportedInferenceTypes: 1
   apiKey: sk_85f68889c4413f73a560bd43fa2249718b0345f7bca42a8c
-  overrideApiKey: 0
+  overrideApiKey: 1
   endpoint: https://api.elevenlabs.io
   model: scribe_v1
   voiceId: 21m00Tcm4TlvDq8ikWAM

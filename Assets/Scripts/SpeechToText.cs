@@ -41,9 +41,9 @@ public class SpeechToText : MonoBehaviour
     private string fullTranscript = "";
     public float time = 120.0f;
     void Start()
-    { 
+    {
 
-        #if UNITY_ANDROID
+#if UNITY_ANDROID
             if (!Permission.HasUserAuthorizedPermission(Permission.Microphone))
             {
                 Debug.Log("[STT] Requesting microphone permission");
@@ -53,7 +53,7 @@ public class SpeechToText : MonoBehaviour
             {
                 Debug.Log("[STT] Microphone permission already granted");
             }
-        #endif
+#endif
         //startButton.onClick.AddListener(listen);
         //stopButton.onClick.AddListener(stop);
         //doneButton.onClick.AddListener(done);
@@ -71,11 +71,20 @@ public class SpeechToText : MonoBehaviour
 
     public void Spawn(Animator anim, string name, float sentences)
     {
+        stop();
         fullSentences = sentences;
         Debug.Log("[STT] Spawn");
         plantAnimator = anim;
         animName = name;
-        Canvas canvas = STTCanvas.GetComponent<Canvas>();
+        time = 120.0f;
+        timer.text = "120.00";
+
+        fullTranscript = "";
+        transcribed_text.text = "Your transcript will appear here";
+
+        listening = false;
+        finishText.SetActive(false);
+
         STTCanvas.SetActive(true);
     }
 
@@ -87,14 +96,15 @@ public class SpeechToText : MonoBehaviour
             {
                 time = Mathf.Clamp(time - Time.deltaTime, 0, time);
                 timer.text = time.ToString("F2");
-            } else
+            }
+            else
             {
                 timer.text = "0.00";
                 fullTranscript = "empty";
                 done();
                 //startButton.gameObject.SetActive(false);
             }
-            
+
         }
     }
 
@@ -117,7 +127,7 @@ public class SpeechToText : MonoBehaviour
             speechToText.StartListening();
         }
         Debug.Log("[STT] listen");
-        
+
         //stopButton.gameObject.SetActive(true);
         //startButton.gameObject.SetActive(false);
         //doneButton.gameObject.SetActive(true);
@@ -131,7 +141,7 @@ public class SpeechToText : MonoBehaviour
         //stopButton.gameObject.SetActive(false);
         //startButton.gameObject.SetActive(true);
         listening = false;
-        
+
         //doneButton.enabled = true;
         // can trigger something here to send transcript to llm
     }
@@ -142,7 +152,8 @@ public class SpeechToText : MonoBehaviour
         if (fullTranscript == null || fullTranscript.Length == 0)
         {
             fullTranscript = transcript;
-        } else
+        }
+        else
         {
             fullTranscript += "\n" + transcript;
         }
@@ -154,7 +165,7 @@ public class SpeechToText : MonoBehaviour
 
         int sentenceCount = sentences.Length;
         StartCoroutine(Bloom(sentenceCount));
-        
+
     }
 
     public void restart()
@@ -165,12 +176,15 @@ public class SpeechToText : MonoBehaviour
         timer.text = "120.00";
         fullTranscript = "";
         transcribed_text.text = "Your transcript will appear here";
+        currentBloom = 0f;
+        finishText.SetActive(false);
+
     }
 
     public void done()
     {
         string stripped = Regex.Replace(fullTranscript, @"\[.*?\]", "");
-        if (STTCanvas.activeInHierarchy  && !string.IsNullOrWhiteSpace(stripped))
+        if (STTCanvas.activeInHierarchy && !string.IsNullOrWhiteSpace(stripped))
         {
             Debug.Log("[STT] done");
             STTCanvas.SetActive(false);
@@ -187,7 +201,7 @@ public class SpeechToText : MonoBehaviour
 
     public IEnumerator Bloom(float amount)
     {
-        amount = Mathf.Clamp01(amount/fullSentences);
+        amount = Mathf.Clamp01(amount / fullSentences);
 
         float targetBloom = Mathf.Clamp01(currentBloom + amount);
 
